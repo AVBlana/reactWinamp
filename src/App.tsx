@@ -85,7 +85,7 @@ const App: React.FC = () => {
           onClick={handleLogin}
           className="btn bg-blue-500 text-white p-2"
         >
-          Login with Google
+          Login with Gogu
         </button>
       ) : (
         <>
