@@ -48,13 +48,13 @@ const App: React.FC = () => {
     setIsPlaying(true);
   };
 
-  const handleLogin = async () => {
-    const result = await signInWithPopup(auth, provider);
-    setUser({
-      uid: result.user.uid,
-      email: result.user.email,
-    });
-  };
+  // const handleLogin = async () => {
+  //   const result = await signInWithPopup(auth, provider);
+  //   setUser({
+  //     uid: result.user.uid,
+  //     email: result.user.email,
+  //   });
+  // };
 
   const handleSignInWithGoogle = async () => {
     const googleProvider = new GoogleAuthProvider();
