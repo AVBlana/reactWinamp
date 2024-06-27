@@ -14,6 +14,7 @@ import {
 import Player from "./components/Player";
 import Playlist from "./components/Playlist";
 import AddSongForm from "./components/AddSongForm";
+import { GoogleAuthProvider } from "firebase/auth";
 
 interface Song {
   title: string;
@@ -47,12 +48,25 @@ const App: React.FC = () => {
     setIsPlaying(true);
   };
 
-  const handleLogin = async () => {
-    const result = await signInWithPopup(auth, provider);
-    setUser({
-      uid: result.user.uid,
-      email: result.user.email,
-    });
+  // const handleLogin = async () => {
+  //   const result = await signInWithPopup(auth, provider);
+  //   setUser({
+  //     uid: result.user.uid,
+  //     email: result.user.email,
+  //   });
+  // };
+
+  const handleSignInWithGoogle = async () => {
+    const googleProvider = new GoogleAuthProvider();
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      setUser({
+        uid: result.user.uid,
+        email: result.user.email,
+      });
+    } catch (error) {
+      console.error("Error signing in with Google:", error);
+    }
   };
 
   const handleLogout = async () => {
@@ -79,13 +93,13 @@ const App: React.FC = () => {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold text-center mb-4">Winamp Clone</h1>
+      <h1 className="text-2xl font-bold text-center mb-4">ReAMP</h1>
       {!user ? (
         <button
-          onClick={handleLogin}
+          onClick={handleSignInWithGoogle}
           className="btn bg-blue-500 text-white p-2"
         >
-          Login with Gogu
+          Login with Google
         </button>
       ) : (
         <>
