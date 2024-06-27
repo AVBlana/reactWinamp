@@ -1,7 +1,0 @@
-{
-  "headers": {
-    "Access-Control-Allow-Origin": "reactamp-86ng4qmao-avblanas-projects.vercel.app",
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "X-Requested-With, Content-Type, Authorization"
-  }
-}
