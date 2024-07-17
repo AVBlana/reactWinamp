@@ -1,15 +1,15 @@
-import React from "react";
+import React, { useContext } from "react";
 import ReactPlayer from "react-player";
+import { PlayingContext } from "../context/Playing";
 
-interface PlayerProps {
-  url: string;
-  playing: boolean;
-}
-
-const Player: React.FC<PlayerProps> = ({ url, playing }) => (
-  <div className="player-wrapper">
-    <ReactPlayer url={url} playing={playing} controls />
-  </div>
-);
+const Player = () => {
+  const { currentSong, isPlaying } = useContext(PlayingContext);
+  if (!currentSong) return null;
+  return (
+    <div className="player-wrapper">
+      <ReactPlayer url={currentSong} playing={isPlaying} controls />
+    </div>
+  );
+};
 
 export default Player;
