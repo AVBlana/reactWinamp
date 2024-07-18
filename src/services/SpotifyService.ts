@@ -1,74 +1,80 @@
 import axios from "axios";
 
 const API_BASE_URL = "https://api.spotify.com/v1";
-const API_CLIENT_ID = process.env.REACT_APP_SPOTIFY_CLIENT_ID || "";
-const API_CLIENT_SECRET = process.env.REACT_APP_SPOTIFY_API_KEY || "";
 
-let accessToken: string | null = null;
-
-const fetchSpotifyAccessToken = async () => {
+export const fetchCurrentUser = async (token: string) => {
   try {
-    const credentials = `${API_CLIENT_ID}:${API_CLIENT_SECRET}`;
-    const basicAuth = btoa(credentials);
-
-    const response = await axios.post(
-      "https://accounts.spotify.com/api/token",
-      "grant_type=client_credentials",
-      {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          Authorization: `Basic ${basicAuth}`,
-        },
-      }
-    );
-
-    const { access_token } = response.data;
-    accessToken = access_token;
-    return access_token;
+    const response = await axios.get(`${API_BASE_URL}/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
   } catch (error) {
-    console.error("Error fetching Spotify access token:", error);
+    if (axios.isAxiosError(error) && !error.response?.status) {
+      localStorage.removeItem("token");
+      window.location.reload();
+    }
     throw error;
   }
 };
 
-export const setSpotifyToken = (token: string) => {
-  accessToken = token;
-};
-
-export interface SpotifySong {
-  name: string;
-  artists: { name: string }[];
-  album: {
-    images: { url: string }[];
-  };
-}
-
-export const searchSpotifyTrack = async (searchFor: string) => {
+export const createPlaylist = async (
+  userId: string,
+  playlistName: string,
+  tracksUris: string[],
+  token: string
+) => {
   try {
-    if (!accessToken) {
-      await fetchSpotifyAccessToken();
-      if (!accessToken) {
-        throw new Error("Failed to obtain Spotify access token");
-      }
-    }
-
-    const response = await axios.get<{ tracks: { items: SpotifySong[] } }>(
-      `${API_BASE_URL}/search`,
+    const createResponse = await axios.post(
+      `${API_BASE_URL}/users/${userId}/playlists`,
+      {
+        name: playlistName,
+        description: "New playlist created by app",
+        public: false,
+      },
       {
         headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-        params: {
-          q: searchFor,
-          type: "track",
-          limit: 1,
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
       }
     );
 
-    return response.data.tracks.items[0]; // Return the first track item
+    const playlistId = createResponse.data.id;
+    await axios.post(
+      `${API_BASE_URL}/playlists/${playlistId}/tracks`,
+      {
+        uris: tracksUris,
+        position: 0,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    return createResponse.data;
   } catch (error) {
-    console.error("Error searching Spotify tracks:", error);
+    throw error;
+  }
+};
+
+export const saveTrack = async (trackId: string, token: string) => {
+  try {
+    await axios.put(
+      `${API_BASE_URL}/me/tracks?ids=${trackId}`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+  } catch (error) {
     throw error;
   }
 };

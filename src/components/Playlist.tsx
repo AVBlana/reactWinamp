@@ -1,23 +1,62 @@
-import React from "react";
-
-interface Song {
-  title: string;
-  url: string;
-}
+import { useEffect } from "react";
+import Track, { TrackType } from "./Track";
 
 interface PlaylistProps {
-  songs: Song[];
-  onSelect: (url: string) => void;
+  playlist: TrackType[];
+  removeFromPlaylist: (trackId: string) => void;
+  setPlaylistName: (name: string) => void;
+  playlistName: string;
+  currentUser: (token: string) => Promise<{ id: string }>;
+  createPlaylist: (
+    userId: string,
+    name: string,
+    token: string
+  ) => Promise<void>;
+  token: string;
 }
 
-const Playlist: React.FC<PlaylistProps> = ({ songs, onSelect }) => (
-  <div className="playlist">
-    {songs.map((song, index) => (
-      <div key={index} className="song" onClick={() => onSelect(song.url)}>
-        {song.title}
-      </div>
-    ))}
-  </div>
-);
+const Playlist = ({
+  playlist,
+  removeFromPlaylist,
+  setPlaylistName,
+  playlistName,
+  currentUser,
+  createPlaylist,
+  token,
+}: PlaylistProps) => {
+  const clickHandler = async () => {
+    try {
+      const userData = await currentUser(token);
+      const userId = userData.id;
+      await createPlaylist(userId, playlistName, token);
+    } catch (error) {
+      console.error("Error creating playlist:", error);
+    }
+  };
+
+  return (
+    <div>
+      <form>
+        <input
+          onChange={(e) => setPlaylistName(e.target.value)}
+          value={playlistName}
+          name="playlist"
+          placeholder="Enter playlist name"
+        />
+      </form>
+      {playlist.map((song, index) => (
+        <Track
+          key={song.id}
+          data={song}
+          removeFromPlaylist={removeFromPlaylist}
+          origin="playlist"
+        />
+      ))}
+      <button type="submit" onClick={clickHandler}>
+        Save to Spotify
+      </button>
+    </div>
+  );
+};
 
 export default Playlist;

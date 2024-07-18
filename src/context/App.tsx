@@ -2,26 +2,26 @@ import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { createContext, ReactNode, useState } from "react";
 import { auth } from "../firebaseConfig";
 
-interface User {
+export interface UserGoogle {
   uid: string;
   email: string | null;
 }
 
 export const AppContext = createContext(
   {} as {
-    user: User | null;
+    userGoogle: UserGoogle | null;
     handleLogin: () => Promise<void>;
     handleLogout: () => Promise<void>;
   }
 );
 
 function useApp() {
-  const [user, setUser] = useState<User | null>(null);
+  const [userGoogle, setUserGoogle] = useState<UserGoogle | null>(null);
   const handleLogin = async () => {
     const googleProvider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, googleProvider);
-      setUser({
+      setUserGoogle({
         uid: result.user.uid,
         email: result.user.email,
       });
@@ -32,10 +32,10 @@ function useApp() {
 
   const handleLogout = async () => {
     await signOut(auth);
-    setUser(null);
+    setUserGoogle(null);
   };
 
-  return { user, handleLogin, handleLogout };
+  return { userGoogle, handleLogin, handleLogout };
 }
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {

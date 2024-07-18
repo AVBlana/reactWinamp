@@ -1,6 +1,7 @@
-import { createContext, ReactNode, SetStateAction, useState } from "react";
+// src/context/Playing.tsx
+import { createContext, ReactNode, useState } from "react";
 
-interface Song {
+export interface Song {
   title: string;
   url: string;
 }
@@ -11,7 +12,7 @@ export const PlayingContext = createContext(
     isPlaying: boolean;
     songs: Song[];
     handleSelectSong: (url: string) => void;
-    changeSong: (id: string) => void;
+    changeSong: (url: string) => void;
   }
 );
 
@@ -20,10 +21,11 @@ function usePlaying() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [songs, setSongs] = useState<Song[]>([]);
 
-  const changeSong = (id: string) => {
-    setCurrentSong(`https://www.youtube.com/watch?v=${id}`);
+  const changeSong = (url: string) => {
+    setCurrentSong(url);
     if (!isPlaying) setIsPlaying(true);
   };
+
   const handleSelectSong = (url: string) => {
     setCurrentSong(url);
     setIsPlaying(true);
