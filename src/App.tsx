@@ -5,7 +5,6 @@ import { Search } from "./components/Search";
 import SpotSearch from "./components/SpotSearch";
 import { TrackType } from "./components/Track";
 import Tracklist from "./components/Tracklist";
-import { YtPlaylist } from "./components/YtPlaylist";
 import { AppContext } from "./context/App";
 import { PlayingContext, Song } from "./context/Playing";
 import {
@@ -13,6 +12,10 @@ import {
   fetchCurrentUser,
   saveTrack,
 } from "./services/SpotifyService";
+import { YtTracklist } from "./components/YtTracklist";
+import { YtPlaylist } from "./components/YtPlaylist";
+import MergedPlaylist from "./components/MergedPlaylist";
+import axios from "axios";
 
 type User = {
   id: string;
@@ -32,10 +35,14 @@ const App: React.FC = () => {
   const [spotifyToken, setSpotifyToken] = useState<string | null>(null);
   const [spotifyUser, setSpotifyUser] = useState<User | null>(null);
   const [songs, setSongs] = useState<Song[]>([]);
+  const [ytPlaylist, setYtPlaylist] = useState<Song[]>([]);
+  const [ytPlaylistTitle, setYtPlaylistTitle] = useState(""); // New state for YouTube playlist title
   const [isSpotifyLoggedIn, setIsSpotifyLoggedIn] = useState(false);
   const [isGoogleLoggedIn, setIsGoogleLoggedIn] = useState(!!userGoogle);
 
   const { currentSong, handleSelectSong } = useContext(PlayingContext);
+
+  const API_BASE_URL = "https://api.spotify.com/v1";
 
   const handleSpotifyLogout = () => {
     localStorage.removeItem("token");
@@ -79,7 +86,7 @@ const App: React.FC = () => {
     }
   };
 
-  const removeFromPlaylist = (trackId: string) => {
+  const removeFromSpotifyPlaylist = (trackId: string) => {
     setPlaylist((prev) => prev.filter((n) => n.id !== trackId));
   };
 
@@ -106,7 +113,7 @@ const App: React.FC = () => {
     }
   };
 
-  const handleCreatePlaylist = async () => {
+  const handleCreateSpotifyPlaylist = async () => {
     if (spotifyUser) {
       const userId = spotifyUser.id;
       try {
@@ -125,6 +132,92 @@ const App: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    const storedSongs = JSON.parse(localStorage.getItem("playlist") || "[]");
+    setSongs(storedSongs);
+  }, []);
+
+  const handleRemoveFromYtPlaylist = (url: string) => {
+    setYtPlaylist((prev) => prev.filter((song) => song.url !== url));
+    localStorage.setItem(
+      "ytPlaylist",
+      JSON.stringify(ytPlaylist.filter((song) => song.url !== url))
+    );
+  };
+
+  const removeFromMergedPlaylist = (
+    trackId: string,
+    source: "spotify" | "youtube"
+  ) => {
+    if (source === "spotify") {
+      // Logic to remove a track from the Spotify playlist
+      setPlaylist((prev) => prev.filter((track) => track.id !== trackId));
+    } else if (source === "youtube") {
+      // Logic to remove a track from the YouTube playlist
+      setYtPlaylist((prev) => prev.filter((track) => track.url !== trackId));
+    }
+  };
+
+  const handleCreateMergedPlaylist = async (
+    userId: string,
+    name: string,
+    token: string
+  ) => {
+    try {
+      // Combine Spotify and YouTube tracks URIs here if needed
+      const spotifyTracksUris = playlist.map((track) => track.uri);
+      const youtubeTracksUris = ytPlaylist.map((song) => song.url); // Assuming URL can be treated as a URI for this example
+      const combinedUris = [...spotifyTracksUris, ...youtubeTracksUris];
+
+      await createPlaylist(userId, name, combinedUris, token);
+    } catch (error) {
+      console.error("Error creating merged playlist:", error);
+    }
+  };
+
+  const createPlaylist = async (
+    userId: string,
+    playlistName: string,
+    tracksUris: string[],
+    token: string
+  ) => {
+    try {
+      const createResponse = await axios.post(
+        `${API_BASE_URL}/users/${userId}/playlists`,
+        {
+          name: playlistName,
+          description: "New playlist created by app",
+          public: false,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const playlistId = createResponse.data.id;
+      await axios.post(
+        `${API_BASE_URL}/playlists/${playlistId}/tracks`,
+        {
+          uris: tracksUris,
+          position: 0,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      return createResponse.data;
+    } catch (error) {
+      throw error;
+    }
+  };
+
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold text-center mb-4">ReAMP</h1>
@@ -133,19 +226,27 @@ const App: React.FC = () => {
           <div>
             <p className="font-bold text-lg">Spotify DB</p>
             <div>
-              {spotifyUser &&
-                spotifyUser.images &&
-                spotifyUser.images.length > 0 && (
-                  <button onClick={handleSpotifyLogout}>
-                    <img
-                      alt={spotifyUser.display_name}
-                      src={spotifyUser.images[0].url}
-                    />
+              {spotifyUser ? (
+                <>
+                  {spotifyUser.images && spotifyUser.images.length > 0 && (
+                    <button
+                      className="p-2 bg-red-700"
+                      onClick={handleSpotifyLogout}
+                    >
+                      <img
+                        alt={spotifyUser.display_name}
+                        src={spotifyUser.images[0].url}
+                      />
+                    </button>
+                  )}
+                  <button
+                    className="p-2 bg-green-700 text-white"
+                    onClick={handleSpotifyLogout}
+                  >
+                    <b>Logout {spotifyUser.display_name}</b>
                   </button>
-                )}
-              <button onClick={handleSpotifyLogout}>
-                <b>{spotifyUser ? spotifyUser.display_name : ""}</b>
-              </button>
+                </>
+              ) : null}
             </div>
           </div>
           <SpotSearch token={spotifyToken} updateTracklist={updateTracklist} />
@@ -158,11 +259,11 @@ const App: React.FC = () => {
               />
               <Playlist
                 playlist={playlist}
-                removeFromPlaylist={removeFromPlaylist}
+                removeFromPlaylist={removeFromSpotifyPlaylist}
                 setPlaylistName={setPlaylistName}
                 playlistName={playlistName}
                 currentUser={fetchCurrentUser}
-                createPlaylist={handleCreatePlaylist}
+                createPlaylist={handleCreateSpotifyPlaylist}
                 token={spotifyToken || ""}
               />
             </div>
@@ -172,9 +273,8 @@ const App: React.FC = () => {
         </div>
         <div className="w-full mx-auto items-center justify-center">
           <p className="text-xl font-bold">YouTube DB</p>
-          <Search />
+          <Search ytPlaylist={ytPlaylist} setYtPlaylist={setYtPlaylist} />
           <Player />
-
           {!isGoogleLoggedIn ? (
             <button
               onClick={handleLogin}
@@ -190,10 +290,35 @@ const App: React.FC = () => {
               >
                 Logout
               </button>
-
-              <YtPlaylist songs={songs} onSelect={handleSelectSong} />
             </>
           )}
+          <div className="flex flex-col gap-2">
+            {/* <YtTracklist songs={songs} onSelect={handleSelectSong} /> */}
+            <input
+              type="text"
+              value={ytPlaylistTitle}
+              onChange={(e) => setYtPlaylistTitle(e.target.value)}
+              placeholder="Enter playlist title"
+              className="border-2 rounded-md p-2 w-full"
+            />
+            <YtPlaylist
+              playlist={ytPlaylist}
+              title={ytPlaylistTitle}
+              onRemove={handleRemoveFromYtPlaylist}
+            />
+          </div>
+        </div>
+        <div>
+          <MergedPlaylist
+            spotifyPlaylist={playlist}
+            youtubePlaylist={ytPlaylist}
+            removeFromPlaylist={removeFromMergedPlaylist}
+            setPlaylistName={setPlaylistName}
+            playlistName={playlistName}
+            currentUser={fetchCurrentUser}
+            createPlaylist={createPlaylist}
+            token={spotifyToken || ""}
+          />
         </div>
       </div>
     </div>

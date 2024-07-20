@@ -1,13 +1,21 @@
-import {
+import React, {
   ChangeEventHandler,
   FormEventHandler,
   useContext,
   useState,
 } from "react";
 import { searchYtVideo, YoutubeVideo } from "../services/YouTubeService";
-import { PlayingContext } from "../context/Playing";
+import { PlayingContext, Song } from "../context/Playing";
 
-export const Search = () => {
+interface SearchProps {
+  ytPlaylist: Song[];
+  setYtPlaylist: React.Dispatch<React.SetStateAction<Song[]>>;
+}
+
+export const Search: React.FC<SearchProps> = ({
+  ytPlaylist,
+  setYtPlaylist,
+}) => {
   const [searchResults, setSearchResults] = useState<YoutubeVideo[]>([]);
   const [searchFor, setSearchFor] = useState("");
 
@@ -18,7 +26,6 @@ export const Search = () => {
     try {
       const results = await searchYtVideo(searchFor);
       setSearchResults(results);
-      console.log(results);
     } catch (err) {
       console.log(err);
     }
@@ -27,6 +34,19 @@ export const Search = () => {
   const onChangeSearchFor: ChangeEventHandler<HTMLInputElement> = (e) => {
     setSearchFor(e.target.value);
   };
+
+  const isInPlaylist = (url: string) =>
+    ytPlaylist.some((song) => song.url === url);
+
+  const handleAddOrRemoveSong = (song: Song) => {
+    const updatedPlaylist = isInPlaylist(song.url)
+      ? ytPlaylist.filter((s) => s.url !== song.url)
+      : [...ytPlaylist, song];
+
+    setYtPlaylist(updatedPlaylist);
+    localStorage.setItem("ytPlaylist", JSON.stringify(updatedPlaylist));
+  };
+
   return (
     <div>
       <form onSubmit={onSearch}>
@@ -36,19 +56,31 @@ export const Search = () => {
           onChange={onChangeSearchFor}
           placeholder="Type to search on youtube"
           className="border-2 rounded-md p-2"
-        ></input>
+        />
       </form>
       <div>
         {searchResults.map((item) => {
+          const song: Song = {
+            title: item.snippet.title,
+            url: `https://www.youtube.com/watch?v=${item.id.videoId}`,
+          };
+
           return (
             <div
-              onClick={() => {
-                changeSong(
-                  `https://www.youtube.com/watch?v=${item.id.videoId}`
-                );
-              }}
+              key={item.id.videoId}
+              className="flex justify-between items-center"
             >
-              {item.snippet.title}
+              <div onClick={() => changeSong(song)} className="cursor-pointer">
+                {item.snippet.title}
+              </div>
+              <button
+                onClick={() => handleAddOrRemoveSong(song)}
+                className="ml-2 p-1 bg-blue-500 text-white rounded"
+              >
+                {isInPlaylist(song.url)
+                  ? "Remove from Playlist"
+                  : "Add to Playlist"}
+              </button>
             </div>
           );
         })}

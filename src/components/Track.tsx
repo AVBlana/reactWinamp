@@ -41,22 +41,6 @@ const Track: React.FC<TrackProps> = ({
     }
   };
 
-  const SaveIcon = () => {
-    return (
-      <div>
-        <IoAdd size={20} />
-      </div>
-    );
-  };
-
-  const RemoveIcon = () => {
-    return (
-      <div>
-        <IoRemove size={20} />
-      </div>
-    );
-  };
-
   return (
     <div key={data.id}>
       <div className="flex gap-2 items-center pt-2 pb-2 pr-2">

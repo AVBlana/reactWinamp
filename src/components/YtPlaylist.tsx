@@ -1,21 +1,33 @@
 import React from "react";
-
-interface Song {
-  title: string;
-  url: string;
-}
+import { Song } from "../context/Playing";
 
 interface YtPlaylistProps {
-  songs: Song[];
-  onSelect: (url: string) => void;
+  playlist: Song[];
+  title: string;
+  onRemove: (url: string) => void;
 }
 
-export const YtPlaylist: React.FC<YtPlaylistProps> = ({ songs, onSelect }) => (
-  <div className="playlist">
-    {songs.map((song, index) => (
-      <div key={index} className="song" onClick={() => onSelect(song.url)}>
-        {song.title}
-      </div>
-    ))}
-  </div>
-);
+export const YtPlaylist: React.FC<YtPlaylistProps> = ({
+  playlist,
+  title,
+  onRemove,
+}) => {
+  return (
+    <div>
+      <h2>{title || "Your YouTube Playlist"}</h2>
+      <ul>
+        {playlist.map((song) => (
+          <li key={song.url} className="flex justify-between items-center">
+            <div>{song.title}</div>
+            <button
+              onClick={() => onRemove(song.url)}
+              className="ml-2 p-1 bg-red-500 text-white rounded"
+            >
+              Remove
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
