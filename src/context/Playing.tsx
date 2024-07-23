@@ -8,11 +8,11 @@ export interface Song {
 
 export const PlayingContext = createContext(
   {} as {
-    currentSong: Song | null; // Change to Song type
+    currentSong: Song | null;
     isPlaying: boolean;
     songs: Song[];
-    handleSelectSong: (song: Song) => void; // Updated to handle Song type
-    changeSong: (song: Song) => void; // Updated to handle Song type
+    handleSelectSong: (song: Song) => void;
+    changeSong: (song: Song) => void;
     addSong: (song: Song) => void;
     removeSong: (url: string) => void;
     setSongs: (song: Song[]) => void;
@@ -20,7 +20,7 @@ export const PlayingContext = createContext(
 );
 
 function usePlaying() {
-  const [currentSong, setCurrentSong] = useState<Song | null>(null); // Changed type
+  const [currentSong, setCurrentSong] = useState<Song | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [songs, setSongs] = useState<Song[]>(() => {
     const storedSongs = localStorage.getItem("playlist");

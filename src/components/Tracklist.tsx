@@ -1,4 +1,4 @@
-import Track, { TrackType } from "./Track";
+import Track, { TrackType } from "./SpotifyTrack";
 
 const Tracklist = ({
   data,

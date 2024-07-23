@@ -1,5 +1,6 @@
-import { FormEventHandler, useState } from "react";
-import { TrackType } from "./Track";
+import React, { FormEventHandler, useState } from "react";
+import { TrackType } from "./SpotifyTrack";
+import SpotifyAuth from "./SpotifyAuth";
 
 const SpotSearch = ({
   token,
@@ -10,18 +11,13 @@ const SpotSearch = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
 
-  const CLIENT_ID = `${process.env.REACT_APP_SPOTIFY_CLIENT_ID}`;
-  const REDIRECT_URI = "http://localhost:3000/callback";
-  const AUTH_ENDPOINT = "https://accounts.spotify.com/authorize";
-  const RESPONSE_TYPE = "token";
-  const SCOPE = [
-    "playlist-modify-private",
-    "playlist-modify-public",
-    "user-library-modify",
-  ];
-
   const submitHandler: FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
+
+    if (!token) {
+      console.error("No token available");
+      return;
+    }
 
     try {
       const response = await fetch(
@@ -46,20 +42,14 @@ const SpotSearch = ({
       }));
       updateTracklist(tracks);
     } catch (error) {
-      console.error("Error (SearchBar):", error);
+      console.error("Error (SpotSearch):", error);
     }
   };
 
   return (
     <div>
       {!token ? (
-        <button className="spotBtn flex p-4 bg-green-600 text-white font-semibold rounded-md">
-          <a
-            href={`${AUTH_ENDPOINT}?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=${RESPONSE_TYPE}&scope=${SCOPE}`}
-          >
-            Login to Spotify
-          </a>
-        </button>
+        <SpotifyAuth />
       ) : (
         <form onSubmit={submitHandler}>
           <input

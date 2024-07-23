@@ -1,7 +1,8 @@
-import React, { useContext } from "react";
+import React, { useState, useContext } from "react";
 import { useLocalStorage } from "usehooks-ts";
-import { TrackType } from "./Track";
+import { TrackType } from "./SpotifyTrack";
 import { Song, PlayingContext } from "../context/Playing";
+import SpotifyPlayer from "./players/SpotifyPlayer";
 
 interface MergedPlaylistProps {
   spotifyPlaylist: TrackType[];
@@ -41,6 +42,8 @@ const MergedPlaylist: React.FC<MergedPlaylistProps> = ({
     }[];
   } | null>("mergedPlaylist", null);
 
+  const [currentTrackUri, setCurrentTrackUri] = useState<string>("");
+
   const handleSave = () => {
     try {
       const merged = {
@@ -69,6 +72,27 @@ const MergedPlaylist: React.FC<MergedPlaylistProps> = ({
     }
   };
 
+  const handlePlay = (track: {
+    uri: string;
+    title?: string;
+    source: string;
+  }) => {
+    if (track.source === "spotify") {
+      setCurrentTrackUri(track.uri);
+      handleSelectSong({
+        url: track.uri,
+        title: track.title,
+        source: "spotify",
+      });
+    } else if (track.source === "youtube") {
+      handleSelectSong({
+        url: track.uri,
+        title: track.title,
+        source: "youtube",
+      });
+    }
+  };
+
   return (
     <div>
       <form>
@@ -79,7 +103,7 @@ const MergedPlaylist: React.FC<MergedPlaylistProps> = ({
           placeholder="Enter playlist name"
         />
       </form>
-      <button type="submit" onClick={handleSave}>
+      <button type="button" onClick={handleSave}>
         Save Merged Playlist
       </button>
       <div>
@@ -93,8 +117,8 @@ const MergedPlaylist: React.FC<MergedPlaylistProps> = ({
             </button>
             <button
               onClick={() =>
-                handleSelectSong({
-                  url: track.uri,
+                handlePlay({
+                  uri: track.uri,
                   title: track.name,
                   source: "spotify",
                 })
@@ -115,8 +139,8 @@ const MergedPlaylist: React.FC<MergedPlaylistProps> = ({
             </button>
             <button
               onClick={() =>
-                handleSelectSong({
-                  url: song.url,
+                handlePlay({
+                  uri: song.url,
                   title: song.title,
                   source: "youtube",
                 })
@@ -139,8 +163,8 @@ const MergedPlaylist: React.FC<MergedPlaylistProps> = ({
                   {track.source})
                   <button
                     onClick={() =>
-                      handleSelectSong({
-                        url: track.uri,
+                      handlePlay({
+                        uri: track.uri,
                         title: track.title,
                         source: track.source,
                       })
@@ -154,6 +178,7 @@ const MergedPlaylist: React.FC<MergedPlaylistProps> = ({
           </div>
         )}
       </div>
+      <SpotifyPlayer token={token} trackUri={currentTrackUri} />
     </div>
   );
 };
