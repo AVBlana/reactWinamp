@@ -188,7 +188,7 @@ const App: React.FC = () => {
                   </button>
                 </>
               ) : (
-                <SpotifyAuth /> // Render SpotifyAuth only if user is not logged in
+                <SpotifyAuth />
               )}
             </div>
           </div>

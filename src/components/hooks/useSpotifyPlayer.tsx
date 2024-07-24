@@ -87,25 +87,22 @@ const useSpotifyPlayer = (token: string) => {
   }, [token]);
 
   const start = useCallback(
-    async (trackUri: string) => {
+    (trackUri: string) => {
       if (isEnabled && deviceId) {
         setHasSong(true);
-        try {
-          await fetch(
-            `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`,
-            {
-              method: "PUT",
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ uris: [trackUri] }),
-            }
-          );
-          return await getState(true);
-        } catch {
-          return await getState();
-        }
+        return fetch(
+          `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`,
+          {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ uris: [trackUri] }),
+          }
+        )
+          .then(() => getState(true))
+          .catch(() => getState());
       } else {
         throw new Error("SpotifyPlayer is not enabled");
       }
@@ -134,14 +131,12 @@ const useSpotifyPlayer = (token: string) => {
   }, [isEnabled, player]);
 
   const seek = useCallback(
-    async (position: number) => {
+    (position: number) => {
       if (isEnabled && player) {
-        try {
-          await player.seek(position);
-          return await getState(undefined, position);
-        } catch {
-          return await getState();
-        }
+        return player
+          .seek(position)
+          .then(() => getState(undefined, position))
+          .catch(() => getState());
       } else {
         throw new Error("SpotifyPlayer is not enabled");
       }

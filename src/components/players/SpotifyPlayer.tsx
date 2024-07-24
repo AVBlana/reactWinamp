@@ -1,4 +1,3 @@
-// SpotifyPlayerComponent.tsx
 import React, { useEffect } from "react";
 import useSpotifyPlayer from "../hooks/useSpotifyPlayer";
 
@@ -8,8 +7,7 @@ interface SpotifyPlayerProps {
 }
 
 const SpotifyPlayer: React.FC<SpotifyPlayerProps> = ({ token, trackUri }) => {
-  const { start, play, pause, seek, stop, playerState } =
-    useSpotifyPlayer(token);
+  const { start, play, pause, seek, stop } = useSpotifyPlayer(token);
 
   useEffect(() => {
     if (trackUri) {

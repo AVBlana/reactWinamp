@@ -17,7 +17,7 @@ interface MergedPlaylistProps {
     tracksUris: string[],
     token: string
   ) => Promise<void>;
-  token: string;
+  token: string | null;
 }
 
 const MergedPlaylist: React.FC<MergedPlaylistProps> = ({
@@ -44,7 +44,7 @@ const MergedPlaylist: React.FC<MergedPlaylistProps> = ({
 
   const [currentTrackUri, setCurrentTrackUri] = useState<string>("");
 
-  const handleSave = () => {
+  const handleSave = async () => {
     try {
       const merged = {
         name: playlistName,
@@ -178,7 +178,7 @@ const MergedPlaylist: React.FC<MergedPlaylistProps> = ({
           </div>
         )}
       </div>
-      <SpotifyPlayer token={token} trackUri={currentTrackUri} />
+      {token && <SpotifyPlayer token={token} trackUri={currentTrackUri} />}
     </div>
   );
 };

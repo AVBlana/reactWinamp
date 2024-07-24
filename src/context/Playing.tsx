@@ -16,6 +16,12 @@ export const PlayingContext = createContext(
     addSong: (song: Song) => void;
     removeSong: (url: string) => void;
     setSongs: (song: Song[]) => void;
+    spotifyPlaylist: Song[];
+    setSpotifyPlaylist: React.Dispatch<React.SetStateAction<Song[]>>;
+    ytPlaylist: Song[];
+    setYtPlaylist: React.Dispatch<React.SetStateAction<Song[]>>;
+    playlistName: string;
+    setPlaylistName: React.Dispatch<React.SetStateAction<string>>;
   }
 );
 
@@ -26,6 +32,9 @@ function usePlaying() {
     const storedSongs = localStorage.getItem("playlist");
     return storedSongs ? JSON.parse(storedSongs) : [];
   });
+  const [spotifyPlaylist, setSpotifyPlaylist] = useState<Song[]>([]);
+  const [ytPlaylist, setYtPlaylist] = useState<Song[]>([]);
+  const [playlistName, setPlaylistName] = useState("");
 
   const changeSong = (song: Song) => {
     setCurrentSong(song);
@@ -62,6 +71,12 @@ function usePlaying() {
     addSong,
     removeSong,
     setSongs,
+    spotifyPlaylist,
+    setSpotifyPlaylist,
+    ytPlaylist,
+    setYtPlaylist,
+    playlistName,
+    setPlaylistName,
   };
 }
 
