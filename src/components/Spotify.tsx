@@ -1,28 +1,30 @@
-import React, { useState, useEffect, useContext } from "react";
-import { TrackType } from "./SpotifyTrack";
-import { Song } from "../context/Playing";
-import Tracklist from "./Tracklist";
-import Playlist from "./SpotifyPlaylist";
-import SpotSearch from "./SpotifySearch";
-import SpotifyAuth from "./SpotifyAuth";
+import React, { useContext, useEffect, useState } from "react";
 import {
+  createPlaylist,
   fetchCurrentUser,
   saveTrack,
-  createPlaylist,
 } from "../services/SpotifyService";
-import { AppContext } from "../context/App";
+import SpotifyAuth from "./SpotifyAuth";
+import Playlist from "./SpotifyPlaylist";
+import SpotSearch from "./SpotifySearch";
+import { TrackType } from "./SpotifyTrack";
+import Tracklist from "./Tracklist";
+import { PlayingContext } from "../context/Playing";
 
-type User = {
+interface User {
   id: string;
   display_name: string;
   images: { url: string }[];
-};
+}
+
+interface SpotifyProps {
+  spotifyPlaylist: TrackType[];
+  setSpotifyPlaylist: React.Dispatch<React.SetStateAction<TrackType[]>>;
+}
 
 const Spotify: React.FC = () => {
-  const { handleLogin } = useContext(AppContext);
-
+  const { spotifyPlaylist, setSpotifyPlaylist } = useContext(PlayingContext);
   const [tracklist, setTracklist] = useState<TrackType[]>([]);
-  const [playlist, setPlaylist] = useState<TrackType[]>([]);
   const [playlistName, setPlaylistName] = useState("");
   const [spotifyToken, setSpotifyToken] = useState<string | null>(null);
   const [spotifyUser, setSpotifyUser] = useState<User | null>(null);
@@ -73,13 +75,13 @@ const Spotify: React.FC = () => {
   };
 
   const addToPlaylist = (newTrack: TrackType) => {
-    if (!playlist.some((t) => t.id === newTrack.id)) {
-      setPlaylist((prev) => [...prev, newTrack]);
+    if (!spotifyPlaylist.some((t) => t.id === newTrack.id)) {
+      setSpotifyPlaylist((prev) => [...prev, newTrack]);
     }
   };
 
   const removeFromSpotifyPlaylist = (trackId: string) => {
-    setPlaylist((prev) => prev.filter((n) => n.id !== trackId));
+    setSpotifyPlaylist((prev) => prev.filter((n) => n.id !== trackId));
   };
 
   const handleSaveTrack = async (trackId: string) => {
@@ -97,10 +99,10 @@ const Spotify: React.FC = () => {
         await createPlaylist(
           userId,
           playlistName,
-          playlist.map((track) => track.uri),
+          spotifyPlaylist.map((track) => track.uri),
           spotifyToken || ""
         );
-        setPlaylist([]);
+        setSpotifyPlaylist([]);
         setPlaylistName("");
         alert(`Your playlist ${playlistName} was successfully created!`);
       } catch (error) {
@@ -160,7 +162,7 @@ const Spotify: React.FC = () => {
               saveTrack={handleSaveTrack}
             />
             <Playlist
-              playlist={playlist}
+              playlist={spotifyPlaylist}
               removeFromPlaylist={removeFromSpotifyPlaylist}
               setPlaylistName={setPlaylistName}
               playlistName={playlistName}

@@ -12,11 +12,15 @@ export const AppContext = createContext(
     userGoogle: UserGoogle | null;
     handleLogin: () => Promise<void>;
     handleLogout: () => Promise<void>;
+    spotifyToken: string | null;
+    setSpotifyToken: React.Dispatch<React.SetStateAction<string | null>>;
   }
 );
 
 function useApp() {
   const [userGoogle, setUserGoogle] = useState<UserGoogle | null>(null);
+  const [spotifyToken, setSpotifyToken] = useState<string | null>(null);
+
   const handleLogin = async () => {
     const googleProvider = new GoogleAuthProvider();
     try {
@@ -35,7 +39,13 @@ function useApp() {
     setUserGoogle(null);
   };
 
-  return { userGoogle, handleLogin, handleLogout };
+  return {
+    userGoogle,
+    handleLogin,
+    handleLogout,
+    spotifyToken,
+    setSpotifyToken,
+  };
 }
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {

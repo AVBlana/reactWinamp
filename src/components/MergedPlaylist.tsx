@@ -77,19 +77,13 @@ const MergedPlaylist: React.FC<MergedPlaylistProps> = ({
     title?: string;
     source: string;
   }) => {
+    handleSelectSong({
+      url: track.uri,
+      title: track.title,
+      source: track.source,
+    });
     if (track.source === "spotify") {
       setCurrentTrackUri(track.uri);
-      handleSelectSong({
-        url: track.uri,
-        title: track.title,
-        source: "spotify",
-      });
-    } else if (track.source === "youtube") {
-      handleSelectSong({
-        url: track.uri,
-        title: track.title,
-        source: "youtube",
-      });
     }
   };
 

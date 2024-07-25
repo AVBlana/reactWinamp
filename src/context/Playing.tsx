@@ -1,4 +1,5 @@
 import { createContext, ReactNode, useState } from "react";
+import { TrackType } from "../components/SpotifyTrack";
 
 export interface Song {
   title?: string;
@@ -16,8 +17,8 @@ export const PlayingContext = createContext(
     addSong: (song: Song) => void;
     removeSong: (url: string) => void;
     setSongs: (song: Song[]) => void;
-    spotifyPlaylist: Song[];
-    setSpotifyPlaylist: React.Dispatch<React.SetStateAction<Song[]>>;
+    spotifyPlaylist: TrackType[];
+    setSpotifyPlaylist: React.Dispatch<React.SetStateAction<TrackType[]>>;
     ytPlaylist: Song[];
     setYtPlaylist: React.Dispatch<React.SetStateAction<Song[]>>;
     playlistName: string;
@@ -32,7 +33,7 @@ function usePlaying() {
     const storedSongs = localStorage.getItem("playlist");
     return storedSongs ? JSON.parse(storedSongs) : [];
   });
-  const [spotifyPlaylist, setSpotifyPlaylist] = useState<Song[]>([]);
+  const [spotifyPlaylist, setSpotifyPlaylist] = useState<TrackType[]>([]);
   const [ytPlaylist, setYtPlaylist] = useState<Song[]>([]);
   const [playlistName, setPlaylistName] = useState("");
 

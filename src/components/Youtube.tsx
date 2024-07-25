@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useContext } from "react";
-import { Song } from "../context/Playing";
+import React, { useContext, useEffect, useState } from "react";
 import { Search } from "./YtSearch";
 import YtPlayer from "./players/YtPlayer";
 import { YtPlaylist } from "./YtPlaylist";
 import { AppContext } from "../context/App";
+import { PlayingContext } from "../context/Playing";
 
 const Youtube: React.FC = () => {
   const {
@@ -11,15 +11,13 @@ const Youtube: React.FC = () => {
     handleLogin,
     handleLogout: handleGoogleLogout,
   } = useContext(AppContext);
-
-  const [ytPlaylist, setYtPlaylist] = useState<Song[]>([]);
+  const { ytPlaylist, setYtPlaylist } = useContext(PlayingContext);
   const [ytPlaylistTitle, setYtPlaylistTitle] = useState("");
-  const [isGoogleLoggedIn, setIsGoogleLoggedIn] = useState(!!userGoogle);
 
   useEffect(() => {
-    const storedSongs = JSON.parse(localStorage.getItem("playlist") || "[]");
+    const storedSongs = JSON.parse(localStorage.getItem("ytPlaylist") || "[]");
     setYtPlaylist(storedSongs);
-  }, []);
+  }, [setYtPlaylist]);
 
   const handleRemoveFromYtPlaylist = (url: string) => {
     setYtPlaylist((prev) => prev.filter((song) => song.url !== url));
@@ -31,10 +29,9 @@ const Youtube: React.FC = () => {
 
   return (
     <div>
-      {/* Your component JSX */}
       <Search ytPlaylist={ytPlaylist} setYtPlaylist={setYtPlaylist} />
       <YtPlayer />
-      {!isGoogleLoggedIn ? (
+      {!userGoogle ? (
         <button
           onClick={handleLogin}
           className="btn flex p-4 bg-blue-500 text-white font-semibold rounded-md"
