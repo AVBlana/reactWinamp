@@ -1,13 +1,16 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect, useCallback } from "react";
 import { useLocalStorage } from "usehooks-ts";
-import { TrackType } from "./SpotifyTrack";
-import { Song, PlayingContext } from "../context/Playing";
+import { PlayingContext } from "../context/Playing";
 import SpotifyPlayer from "./players/SpotifyPlayer";
+import { FaCirclePlay } from "react-icons/fa6";
+import { IoIosRemoveCircleOutline } from "react-icons/io";
+import YtPlayer from "./players/YtPlayer";
+import { ServiceType, Song } from "../types/playerTypes";
 
 interface MergedPlaylistProps {
-  spotifyPlaylist: TrackType[];
+  spotifyPlaylist: Song[];
   youtubePlaylist: Song[];
-  removeFromPlaylist: (trackId: string, source: "spotify" | "youtube") => void;
+  removeFromPlaylist: (track: Song) => void;
   setPlaylistName: (name: string) => void;
   playlistName: string;
   currentUser: (token: string) => Promise<{ id: string }>;
@@ -30,141 +33,111 @@ const MergedPlaylist: React.FC<MergedPlaylistProps> = ({
   createPlaylist,
   token,
 }) => {
-  const { handleSelectSong } = useContext(PlayingContext);
+  const { handleSelectSong, currentSong } = useContext(PlayingContext);
   const [mergedPlaylist, setMergedPlaylist] = useLocalStorage<{
     name: string;
-    tracks: {
-      id: string;
-      uri: string;
-      title?: string;
-      artist?: string;
-      source: string;
-    }[];
+    tracks: Song[];
   } | null>("mergedPlaylist", null);
-
-  const [currentTrackUri, setCurrentTrackUri] = useState<string>("");
 
   const handleSave = async () => {
     try {
       const merged = {
         name: playlistName,
-        tracks: [
-          ...spotifyPlaylist.map((track) => ({
-            id: track.id,
-            uri: track.uri,
-            title: track.name,
-            artist: track.artists.map((artist) => artist.name).join(", "),
-            source: "spotify",
-          })),
-          ...youtubePlaylist.map((song) => ({
-            id: song.url,
-            uri: song.url,
-            title: song.title,
-            source: "youtube",
-          })),
-        ],
+        tracks: [...youtubePlaylist, ...spotifyPlaylist],
       };
 
       setMergedPlaylist(merged);
-      alert(`Your merged playlist ${playlistName} was successfully saved!`);
+      alert(`Your merged playlist "${playlistName}" was successfully saved!`);
     } catch (error) {
       console.error("Error saving playlist to localStorage:", error);
+      alert("Failed to save playlist.");
     }
   };
 
-  const handlePlay = (track: {
-    uri: string;
-    title?: string;
-    source: string;
-  }) => {
-    handleSelectSong({
-      url: track.uri,
-      title: track.title,
-      source: track.source,
-    });
-    if (track.source === "spotify") {
-      setCurrentTrackUri(track.uri);
+  const handlePlay = useCallback(
+    (track: Song) => {
+      handleSelectSong(track);
+    },
+    [handleSelectSong]
+  );
+
+  const handleRemoveFromMergedPlaylist = (track: Song) => {
+    if (mergedPlaylist) {
+      const updatedTracks = mergedPlaylist.tracks.filter(
+        (song) => !(song.id === track.id)
+      );
+      setMergedPlaylist({ ...mergedPlaylist, tracks: updatedTracks });
     }
   };
+
+  // useEffect(() => {
+  //   if (currentTrackUri) {
+  //     handleSelectSong(currentTrackUri);
+  //   }
+  // }, [currentTrackUri, handleSelectSong]);
 
   return (
-    <div>
+    <div className="flex flex-col space-y-2">
       <form>
         <input
           onChange={(e) => setPlaylistName(e.target.value)}
           value={playlistName}
           name="playlist"
           placeholder="Enter playlist name"
+          className="p-2 border rounded"
         />
       </form>
-      <button type="button" onClick={handleSave}>
-        Save Merged Playlist
+      <button
+        className="flex py-2 px-4 bg-green-600 rounded-xl text-white"
+        type="button"
+        onClick={handleSave}
+      >
+        Save Merged Playlist to LocalStorage
       </button>
       <div>
-        <h3>Spotify Playlist</h3>
+        <p className="text-xl font-bold">Playing queue</p>
         {spotifyPlaylist.map((track) => (
-          <div key={track.id}>
-            {track.name} by{" "}
-            {track.artists.map((artist) => artist.name).join(", ")}
-            <button onClick={() => removeFromPlaylist(track.id, "spotify")}>
-              Remove
+          <div className="flex items-center space-x-2" key={track.id}>
+            <span>
+              {track.title} by {track.artist.name}
+            </span>
+            <button
+              onClick={() => removeFromPlaylist(track)}
+              aria-label="Remove from Spotify Playlist"
+            >
+              <IoIosRemoveCircleOutline />
             </button>
             <button
-              onClick={() =>
-                handlePlay({
-                  uri: track.uri,
-                  title: track.name,
-                  source: "spotify",
-                })
-              }
+              onClick={() => handlePlay(track)}
+              aria-label="Play from Spotify Playlist"
             >
-              Play
+              <FaCirclePlay />
             </button>
           </div>
         ))}
       </div>
+
       <div>
-        <h3>YouTube Playlist</h3>
-        {youtubePlaylist.map((song) => (
-          <div key={song.url}>
-            {song.title}
-            <button onClick={() => removeFromPlaylist(song.url, "youtube")}>
-              Remove
-            </button>
-            <button
-              onClick={() =>
-                handlePlay({
-                  uri: song.url,
-                  title: song.title,
-                  source: "youtube",
-                })
-              }
-            >
-              Play
-            </button>
-          </div>
-        ))}
-      </div>
-      <div>
-        <h3>Saved Merged Playlist</h3>
+        <p className="font-semibold text-lg">Saved Merged Playlist</p>
         {mergedPlaylist && (
           <div>
-            <h4>{mergedPlaylist.name}</h4>
+            <p className="font-bold text-xl">{mergedPlaylist.name}</p>
             <ul>
               {mergedPlaylist.tracks.map((track) => (
                 <li key={track.id}>
                   {track.title} {track.artist ? `by ${track.artist}` : ""} (
-                  {track.source})
+                  {track.type})
                   <button
-                    onClick={() =>
-                      handlePlay({
-                        uri: track.uri,
-                        title: track.title,
-                        source: track.source,
-                      })
-                    }
+                    onClick={() => handlePlay(track)}
+                    aria-label="Play from saved playlist"
                   >
-                    Play
+                    <FaCirclePlay />
+                  </button>
+                  <button
+                    onClick={() => handleRemoveFromMergedPlaylist(track)}
+                    aria-label="Remove from saved playlist"
+                  >
+                    <IoIosRemoveCircleOutline />
                   </button>
                 </li>
               ))}
@@ -172,7 +145,10 @@ const MergedPlaylist: React.FC<MergedPlaylistProps> = ({
           </div>
         )}
       </div>
-      {token && <SpotifyPlayer token={token} trackUri={currentTrackUri} />}
+      <div className="flex space-x-4">
+        <SpotifyPlayer token={token} />
+        <YtPlayer />
+      </div>
     </div>
   );
 };

@@ -1,31 +1,24 @@
-import React from "react";
+import React, { useContext } from "react";
 import { IoAdd, IoRemove } from "react-icons/io5";
-
-export interface TrackType {
-  id: string;
-  name: string;
-  artists: { name: string }[];
-  album: { images: { url: string }[] };
-  uri: string;
-}
+import { Song } from "../types/playerTypes";
+import { PlayingContext } from "../context/Playing";
 
 interface TrackProps {
-  data: TrackType;
-  addToPlaylist?: (track: TrackType) => void;
+  data: Song;
+  addToPlaylist?: (track: Song) => void;
   removeFromPlaylist?: (trackId: string) => void;
   origin: string;
   saveTrack?: (trackId: string) => void;
 }
 
-const Track: React.FC<TrackProps> = ({
+export const TrackItem: React.FC<TrackProps> = ({
   data,
   addToPlaylist,
   removeFromPlaylist,
   origin,
   saveTrack,
 }) => {
-  const artistArray = data?.artists?.map((artist) => artist.name) || [];
-  const artists = artistArray.join(", ");
+  const { handleSelectSong } = useContext(PlayingContext);
 
   const clickHandler = () => {
     if (origin === "tracklist" && addToPlaylist) {
@@ -40,14 +33,17 @@ const Track: React.FC<TrackProps> = ({
       saveTrack(data.id);
     }
   };
+  const handlePlay = () => {
+    handleSelectSong(data);
+  };
 
   return (
     <div key={data.id}>
       <div className="flex gap-2 items-center pt-2 pb-2 pr-2">
-        <img src={data.album.images[2].url} alt={data.name} />
+        <img src={data.artwork.small.url} alt={data.title} />
         <div>
-          <h4>{data.name}</h4>
-          <p>{artists}</p>
+          <h4>{data.title}</h4>
+          <p>{data.artist.name}</p>
         </div>
       </div>
       <div className="flex pb-4">
@@ -63,9 +59,8 @@ const Track: React.FC<TrackProps> = ({
             <IoRemove size={20} />
           )}
         </button>
+        <button onClick={handlePlay}>Play</button>
       </div>
     </div>
   );
 };
-
-export default Track;

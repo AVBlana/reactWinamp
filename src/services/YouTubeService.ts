@@ -29,7 +29,7 @@ export interface YoutubeVideo {
         url: string;
         width: number;
       };
-    }[];
+    };
     title: string;
   };
 }
@@ -48,7 +48,7 @@ export const searchYtVideo = async (searchFor: string) => {
         },
       }
     );
-    return result.data.items;
+    return result.data.items as YoutubeVideo[];
   } catch (err) {
     console.log(err);
     return [];

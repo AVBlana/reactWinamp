@@ -1,0 +1,95 @@
+.spotify-player {
+  display: flex;
+  position: relative;
+}
+
+.pickup-box {
+  position: relative;
+  width: 250px;
+  height: 150px; /* Adjusted height to fit both vinyl and controls */
+  background-color: #666; /* Pickup box color */
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.7); /* Pickup box shadow */
+  display: flex;
+  align-items: center;
+}
+
+.track-info {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  color: #fff;
+  font-size: 14px;
+}
+
+.vinyl-container {
+  position: relative;
+  width: 200px; /* Vinyl size */
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vinyl-background {
+  position: absolute;
+  display: flex;
+  width: 200px;
+  height: 200px;
+  border: solid 2px red;
+  border-radius: 50%;
+}
+
+.vinyl {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid blue;
+  animation: spin 10s linear infinite; /* Smooth spin animation */
+  transition: animation 0.5s ease; /* Smooth transition for starting/stopping spin */
+  transform-origin: center; /* Ensure spinning around the center */
+  box-sizing: border-box; /* Include the border in the element's total width and height */
+}
+
+.vinyl.static {
+  animation: none; /* Stop spinning when static */
+}
+
+.album-cover {
+  width: 40%; /* Adjust size of the album cover */
+  height: 40%;
+  border-radius: 50%;
+  object-fit: cover;
+  z-index: 1; /* Ensure the cover is on top */
+}
+
+.black-hole {
+  position: absolute;
+  width: 10px; /* Size of the black hole */
+  height: 10px;
+  border: solid 2px black;
+  border-radius: 50%;
+  background: #ffffff;
+  z-index: 2; /* Ensure the black hole is on top */
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.controls {
+  display: flex;
+  flex-direction: column; /* Align controls vertically */
+  gap: 10px;
+  align-items: center;
+  position: absolute;
+  right: 10px; /* Adjust to position controls inside the box */
+}

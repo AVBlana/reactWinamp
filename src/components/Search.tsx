@@ -2,14 +2,14 @@ import React, { useContext, useEffect, useState } from "react";
 import {
   createPlaylist,
   fetchCurrentUser,
-  saveTrack,
+  savePlaylistToSpotify,
 } from "../services/SpotifyService";
 import SpotifyAuth from "./SpotifyAuth";
 import Playlist from "./SpotifyPlaylist";
 import SpotSearch from "./SpotifySearch";
-import { TrackType } from "./SpotifyTrack";
 import Tracklist from "./Tracklist";
 import { PlayingContext } from "../context/Playing";
+import { Song } from "../types/playerTypes";
 
 interface User {
   id: string;
@@ -17,14 +17,9 @@ interface User {
   images: { url: string }[];
 }
 
-interface SpotifyProps {
-  spotifyPlaylist: TrackType[];
-  setSpotifyPlaylist: React.Dispatch<React.SetStateAction<TrackType[]>>;
-}
-
-const Spotify: React.FC = () => {
+export const Search: React.FC = () => {
   const { spotifyPlaylist, setSpotifyPlaylist } = useContext(PlayingContext);
-  const [tracklist, setTracklist] = useState<TrackType[]>([]);
+  const [tracklist, setTracklist] = useState<Song[]>([]);
   const [playlistName, setPlaylistName] = useState("");
   const [spotifyToken, setSpotifyToken] = useState<string | null>(null);
   const [spotifyUser, setSpotifyUser] = useState<User | null>(null);
@@ -70,11 +65,11 @@ const Spotify: React.FC = () => {
     fetchSpotifyUserData();
   }, [spotifyToken]);
 
-  const updateTracklist = (array: TrackType[]) => {
+  const updateTracklist = (array: Song[]) => {
     setTracklist(array);
   };
 
-  const addToPlaylist = (newTrack: TrackType) => {
+  const addToPlaylist = (newTrack: Song) => {
     if (!spotifyPlaylist.some((t) => t.id === newTrack.id)) {
       setSpotifyPlaylist((prev) => [...prev, newTrack]);
     }
@@ -86,7 +81,7 @@ const Spotify: React.FC = () => {
 
   const handleSaveTrack = async (trackId: string) => {
     try {
-      await saveTrack(trackId, spotifyToken || "");
+      await savePlaylistToSpotify(trackId, spotifyToken || "");
     } catch (error) {
       console.error("Error saving track:", error);
     }
@@ -99,7 +94,9 @@ const Spotify: React.FC = () => {
         await createPlaylist(
           userId,
           playlistName,
-          spotifyPlaylist.map((track) => track.uri),
+          spotifyPlaylist.map(
+            (track) => `https://open.spotify.com/track/${track.id}`
+          ),
           spotifyToken || ""
         );
         setSpotifyPlaylist([]);
@@ -176,5 +173,3 @@ const Spotify: React.FC = () => {
     </div>
   );
 };
-
-export default Spotify;

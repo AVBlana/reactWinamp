@@ -1,10 +1,10 @@
-import React, { useContext, useEffect } from "react";
+import React, { useContext, useEffect, useCallback } from "react";
 import MergedPlaylist from "./components/MergedPlaylist";
 import { AppContext } from "./context/App";
 import { PlayingContext } from "./context/Playing";
 import { fetchCurrentUser, createPlaylist } from "./services/SpotifyService";
-import Spotify from "./components/Spotify";
-import Youtube from "./components/Youtube";
+import { ServiceType, Song } from "./types/playerTypes";
+import { Search } from "./components/Search";
 
 const App: React.FC = () => {
   const { spotifyToken, setSpotifyToken } = useContext(AppContext);
@@ -17,37 +17,38 @@ const App: React.FC = () => {
     setPlaylistName,
   } = useContext(PlayingContext);
 
-  const removeFromMergedPlaylist = (
-    trackId: string,
-    source: "spotify" | "youtube"
-  ) => {
-    if (source === "spotify") {
-      setSpotifyPlaylist((prev) =>
-        prev.filter((track) => track.id !== trackId)
-      );
-    } else if (source === "youtube") {
-      setYtPlaylist((prev) => prev.filter((track) => track.url !== trackId));
-    }
-  };
+  const removeFromMergedPlaylist = useCallback(
+    (track: Song) => {
+      if (track.type === ServiceType.Spotify) {
+        setSpotifyPlaylist((prev) =>
+          prev.filter((song) => song.id !== track.id)
+        );
+      } else if (track.type === ServiceType.Youtube) {
+        setYtPlaylist((prev) => prev.filter((song) => song.id !== track.id));
+      }
+    },
+    [setSpotifyPlaylist, setYtPlaylist]
+  );
 
   useEffect(() => {
     const initializeSpotifyToken = () => {
       const hash = window.location.hash;
-      let accessToken: string | null = localStorage.getItem("token");
+      const storedToken = localStorage.getItem("token");
+      let accessToken = storedToken;
 
       if (!accessToken && hash) {
-        accessToken =
-          hash
-            .substring(1)
-            .split("&")
-            .find((elem) => elem.startsWith("access_token"))
-            ?.split("=")[1] || null;
+        const tokenParam = hash
+          .substring(1)
+          .split("&")
+          .find((elem) => elem.startsWith("access_token"));
+        accessToken = tokenParam?.split("=")[1] || null;
 
-        window.location.hash = "";
         if (accessToken) {
           localStorage.setItem("token", accessToken);
         }
+        window.location.hash = ""; // Clear hash to prevent reloading with token
       }
+
       setSpotifyToken(accessToken);
     };
 
@@ -59,10 +60,7 @@ const App: React.FC = () => {
       <h1 className="text-2xl font-bold text-center mb-4">ReAMP</h1>
       <div className="flex">
         <div className="w-1/2 p-2">
-          <Spotify />
-        </div>
-        <div className="w-1/2 p-2">
-          <Youtube />
+          <Search />
         </div>
       </div>
       <div>

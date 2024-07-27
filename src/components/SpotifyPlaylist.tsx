@@ -1,7 +1,8 @@
-import Track, { TrackType } from "./SpotifyTrack";
+import { Song } from "../types/playerTypes";
+import { TrackItem } from "./TrackItem";
 
 interface PlaylistProps {
-  playlist: TrackType[];
+  playlist: Song[];
   removeFromPlaylist: (trackId: string) => void;
   setPlaylistName: (name: string) => void;
   playlistName: string;
@@ -44,7 +45,7 @@ const Playlist = ({
         />
       </form>
       {playlist.map((song, index) => (
-        <Track
+        <TrackItem
           key={song.id}
           data={song}
           removeFromPlaylist={removeFromPlaylist}

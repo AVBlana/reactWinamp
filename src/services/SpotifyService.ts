@@ -1,4 +1,5 @@
 import axios from "axios";
+import { Track } from "@spotify/web-api-ts-sdk";
 
 const API_BASE_URL = "https://api.spotify.com/v1";
 
@@ -16,6 +17,31 @@ export const fetchCurrentUser = async (token: string) => {
       window.location.reload();
     }
     throw error;
+  }
+};
+
+export const searchSpotify = async (searchTerm: string, token: string) => {
+  try {
+    const response = await fetch(
+      `https://api.spotify.com/v1/search?q=${searchTerm}&type=track`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      localStorage.removeItem("token");
+      window.location.reload();
+      throw new Error("Network response was not ok");
+    }
+    const data = await response.json();
+    return data.tracks.items as Track[];
+  } catch (error) {
+    console.log(error);
+    return [];
   }
 };
 
@@ -62,7 +88,7 @@ export const createPlaylist = async (
   }
 };
 
-export const saveTrack = async (trackId: string, token: string) => {
+export const savePlaylistToSpotify = async (trackId: string, token: string) => {
   try {
     await axios.put(
       `${API_BASE_URL}/me/tracks?ids=${trackId}`,

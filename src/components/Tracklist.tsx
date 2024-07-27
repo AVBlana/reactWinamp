@@ -1,12 +1,13 @@
-import Track, { TrackType } from "./SpotifyTrack";
+import { Song } from "../types/playerTypes";
+import { TrackItem } from "./TrackItem";
 
 const Tracklist = ({
   data,
   addToPlaylist,
   saveTrack,
 }: {
-  data: TrackType[];
-  addToPlaylist: (track: TrackType) => void;
+  data: Song[];
+  addToPlaylist: (track: Song) => void;
   saveTrack: (trackId: string) => void;
 }) => {
   return (
@@ -14,7 +15,7 @@ const Tracklist = ({
       <h2>Results</h2>
       {data !== undefined ? (
         data.map((track, index) => (
-          <Track
+          <TrackItem
             key={track.id}
             data={data[index]}
             addToPlaylist={addToPlaylist}
