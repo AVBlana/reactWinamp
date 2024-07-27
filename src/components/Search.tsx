@@ -1,175 +1,93 @@
-import React, { useContext, useEffect, useState } from "react";
-import {
-  createPlaylist,
-  fetchCurrentUser,
-  savePlaylistToSpotify,
-} from "../services/SpotifyService";
+// url: `https://open.spotify.com/track/${track.id}`
+
+import { Track } from "@spotify/web-api-ts-sdk";
+import { FormEventHandler, useContext, useState } from "react";
+import { searchSpotify } from "../services/SpotifyService";
+import { searchYtVideo, YoutubeVideo } from "../services/YouTubeService";
+import { ServiceType, Song } from "../types/playerTypes";
 import SpotifyAuth from "./SpotifyAuth";
-import Playlist from "./SpotifyPlaylist";
-import SpotSearch from "./SpotifySearch";
 import Tracklist from "./Tracklist";
-import { PlayingContext } from "../context/Playing";
-import { Song } from "../types/playerTypes";
+import { AppContext } from "../context/App";
 
-interface User {
-  id: string;
-  display_name: string;
-  images: { url: string }[];
-}
-
-export const Search: React.FC = () => {
-  const { spotifyPlaylist, setSpotifyPlaylist } = useContext(PlayingContext);
+export const Search = () => {
   const [tracklist, setTracklist] = useState<Song[]>([]);
-  const [playlistName, setPlaylistName] = useState("");
-  const [spotifyToken, setSpotifyToken] = useState<string | null>(null);
-  const [spotifyUser, setSpotifyUser] = useState<User | null>(null);
-  const [isSpotifyLoggedIn, setIsSpotifyLoggedIn] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const { spotifyToken } = useContext(AppContext);
 
-  useEffect(() => {
-    const initializeSpotifyToken = () => {
-      const hash = window.location.hash;
-      let accessToken: string | null = localStorage.getItem("token");
-
-      if (!accessToken && hash) {
-        accessToken =
-          hash
-            .substring(1)
-            .split("&")
-            .find((elem) => elem.startsWith("access_token"))
-            ?.split("=")[1] || null;
-
-        window.location.hash = "";
-        if (accessToken) {
-          localStorage.setItem("token", accessToken);
-        }
-      }
-      setSpotifyToken(accessToken);
-      setIsSpotifyLoggedIn(!!accessToken);
-    };
-
-    initializeSpotifyToken();
-  }, []);
-
-  useEffect(() => {
-    const fetchSpotifyUserData = async () => {
-      if (spotifyToken) {
-        try {
-          const userData = await fetchCurrentUser(spotifyToken);
-          setSpotifyUser(userData);
-        } catch (error) {
-          console.error("Error fetching Spotify user data:", error);
-        }
-      }
-    };
-
-    fetchSpotifyUserData();
-  }, [spotifyToken]);
-
-  const updateTracklist = (array: Song[]) => {
-    setTracklist(array);
-  };
-
-  const addToPlaylist = (newTrack: Song) => {
-    if (!spotifyPlaylist.some((t) => t.id === newTrack.id)) {
-      setSpotifyPlaylist((prev) => [...prev, newTrack]);
+  const submitHandler = async () => {
+    if (!spotifyToken) {
+      console.error("No token available");
+      return;
     }
-  };
 
-  const removeFromSpotifyPlaylist = (trackId: string) => {
-    setSpotifyPlaylist((prev) => prev.filter((n) => n.id !== trackId));
-  };
-
-  const handleSaveTrack = async (trackId: string) => {
     try {
-      await savePlaylistToSpotify(trackId, spotifyToken || "");
+      const requests = [
+        searchSpotify(searchTerm, spotifyToken),
+        searchYtVideo(searchTerm),
+      ];
+      const results = await Promise.all(requests);
+      console.log(results);
+
+      let songs = [];
+      const spotifySongs = results[0] as Track[];
+      const youtubeSongs = results[1] as YoutubeVideo[];
+      songs = [
+        ...spotifySongs.map((item) => {
+          return {
+            id: item.id,
+            artist: {
+              id: item.artists[0].id,
+              name: item.artists[0].name,
+            },
+            artwork: {
+              small: item.album.images[2],
+              medium: item.album.images[1],
+              big: item.album.images[0],
+            },
+            title: item.name,
+            type: ServiceType.Spotify,
+          } as Song;
+        }),
+        ...youtubeSongs.map((item) => {
+          return {
+            artist: {
+              id: item.snippet.channelId,
+              name: item.snippet.channelTitle,
+            },
+            artwork: {
+              small: item.snippet.thumbnails?.default,
+              medium: item.snippet.thumbnails?.medium,
+              big: item.snippet.thumbnails?.high,
+            },
+            id: item.id.videoId,
+            title: item.snippet.title,
+            type: ServiceType.Youtube,
+          } as Song;
+        }),
+      ];
+
+      setTracklist(songs);
     } catch (error) {
-      console.error("Error saving track:", error);
+      console.error("Error (SpotSearch):", error);
     }
   };
 
-  const handleCreateSpotifyPlaylist = async () => {
-    if (spotifyUser) {
-      const userId = spotifyUser.id;
-      try {
-        await createPlaylist(
-          userId,
-          playlistName,
-          spotifyPlaylist.map(
-            (track) => `https://open.spotify.com/track/${track.id}`
-          ),
-          spotifyToken || ""
-        );
-        setSpotifyPlaylist([]);
-        setPlaylistName("");
-        alert(`Your playlist ${playlistName} was successfully created!`);
-      } catch (error) {
-        console.error("Error creating playlist:", error);
-      }
-    }
-  };
+  const saveTrack = (trackId: string) => {};
 
   return (
     <div>
-      <p className="font-bold text-lg">Spotify DB</p>
-      <div>
-        {spotifyUser ? (
-          <>
-            {spotifyUser.images && spotifyUser.images.length > 0 && (
-              <button
-                className="p-2 bg-red-700"
-                onClick={() => {
-                  localStorage.removeItem("token");
-                  setSpotifyToken(null);
-                  setSpotifyUser(null);
-                  setIsSpotifyLoggedIn(false);
-                }}
-              >
-                <img
-                  alt={spotifyUser.display_name}
-                  src={spotifyUser.images[0].url}
-                />
-              </button>
-            )}
-            <button
-              className="p-2 bg-green-700 text-white"
-              onClick={() => {
-                localStorage.removeItem("token");
-                setSpotifyToken(null);
-                setSpotifyUser(null);
-                setIsSpotifyLoggedIn(false);
-              }}
-            >
-              <b>Logout {spotifyUser.display_name}</b>
-            </button>
-          </>
-        ) : (
-          <SpotifyAuth />
-        )}
-      </div>
-      {spotifyToken && (
-        <>
-          <SpotSearch
-            token={spotifyToken || ""}
-            updateTracklist={updateTracklist}
-          />
-          <div className="flex">
-            <Tracklist
-              data={tracklist}
-              addToPlaylist={addToPlaylist}
-              saveTrack={handleSaveTrack}
-            />
-            <Playlist
-              playlist={spotifyPlaylist}
-              removeFromPlaylist={removeFromSpotifyPlaylist}
-              setPlaylistName={setPlaylistName}
-              playlistName={playlistName}
-              createPlaylist={handleCreateSpotifyPlaylist}
-              token={spotifyToken || ""}
-              currentUser={fetchCurrentUser}
-            />
-          </div>
-        </>
-      )}
+      <SpotifyAuth />
+
+      <input
+        type="text"
+        className="border-2 rounded-md p-2"
+        onChange={(e) => setSearchTerm(e.target.value)}
+        value={searchTerm}
+        name="searchTerm"
+        placeholder="Search on Spotify"
+      />
+      <button onClick={submitHandler}>SEARCH</button>
+      <Tracklist data={tracklist} saveTrack={saveTrack} />
     </div>
   );
 };

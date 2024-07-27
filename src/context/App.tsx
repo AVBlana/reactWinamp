@@ -10,21 +10,18 @@ interface UserGoogle {
 
 interface AppContextProps {
   userGoogle: UserGoogle | null;
+  spotifyToken: string | null;
   handleLogin: () => Promise<void>;
   handleLogout: () => Promise<void>;
-  spotifyToken: string | null;
   setSpotifyToken: React.Dispatch<React.SetStateAction<string | null>>;
+  handleSpotifyLogout: () => Promise<void>;
   refreshSpotifyToken: () => Promise<void>;
 }
 
-export const AppContext = createContext<AppContextProps>({
+export const AppContext = createContext({
   userGoogle: null,
-  handleLogin: async () => {},
-  handleLogout: async () => {},
   spotifyToken: null,
-  setSpotifyToken: () => {},
-  refreshSpotifyToken: async () => {},
-});
+} as AppContextProps);
 
 function useApp() {
   const [userGoogle, setUserGoogle] = useState<UserGoogle | null>(null);
@@ -43,11 +40,15 @@ function useApp() {
     }
   };
 
+  const handleSpotifyLogout = async () => {
+    localStorage.removeItem("token");
+    setSpotifyToken(null);
+  };
   const handleLogout = async () => {
     try {
       await signOut(auth);
       setUserGoogle(null);
-      setSpotifyToken(null);
+      handleSpotifyLogout();
     } catch (error) {
       console.error("Error signing out:", error);
     }
@@ -55,14 +56,14 @@ function useApp() {
 
   const refreshSpotifyToken = async () => {
     try {
-      const refreshToken = localStorage.getItem("refresh_token");
+      const refreshToken = localStorage.getItem("token");
       if (!refreshToken) throw new Error("No refresh token available");
 
       const response = await axios.post("/refresh", { refreshToken });
       const newToken = response.data.access_token;
 
       setSpotifyToken(newToken);
-      localStorage.setItem("access_token", newToken);
+      localStorage.setItem("token", newToken);
     } catch (error) {
       console.error("Error refreshing Spotify token:", error);
       setSpotifyToken(null);
@@ -70,7 +71,7 @@ function useApp() {
   };
 
   useEffect(() => {
-    const storedToken = localStorage.getItem("access_token");
+    const storedToken = localStorage.getItem("token");
     if (storedToken) {
       setSpotifyToken(storedToken);
     } else {
@@ -82,6 +83,7 @@ function useApp() {
     userGoogle,
     handleLogin,
     handleLogout,
+    handleSpotifyLogout,
     spotifyToken,
     setSpotifyToken,
     refreshSpotifyToken,

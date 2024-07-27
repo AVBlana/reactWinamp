@@ -1,23 +1,18 @@
-import React, { useContext, useEffect, useState } from "react";
+import { useContext, useEffect } from "react";
 import { FaFastForward, FaPause, FaPlay } from "react-icons/fa";
 import { FaStop } from "react-icons/fa6";
 import { PlayingContext } from "../../context/Playing";
 import { ServiceType } from "../../types/playerTypes";
-import useSpotifyPlayer from "../hooks/useSpotifyPlayer";
+import useSpotifyPlayer from "./useSpotifyPlayer";
 import "./SpotifyPlayer.css";
 
-interface SpotifyPlayerProps {
-  token: string | null;
-}
-
-const SpotifyPlayer: React.FC<SpotifyPlayerProps> = () => {
+const SpotifyPlayer = () => {
   const { start, play, pause, seek, stop, playerState } = useSpotifyPlayer();
 
   const { currentSong } = useContext(PlayingContext);
 
   useEffect(() => {
     if (currentSong?.type === ServiceType.Spotify) {
-      console.log(currentSong);
       start(`spotify:track:${currentSong.id}`).catch((error) => {
         console.error("Error starting track:", error);
       });
@@ -65,14 +60,12 @@ const SpotifyPlayer: React.FC<SpotifyPlayerProps> = () => {
         >
           <div className="vinyl-background" style={vinylStyle} />
 
-          <>
-            <img
-              src={currentSong?.artwork.small.url}
-              alt="Album Cover"
-              className="album-cover"
-            />
-            <div className="black-hole" />
-          </>
+          <img
+            src={currentSong?.artwork.small.url}
+            alt="Album Cover"
+            className="album-cover"
+          />
+          <div className="black-hole" />
         </div>
         <div className="controls">
           <button onClick={handlePlay}>

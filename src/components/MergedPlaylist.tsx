@@ -20,7 +20,6 @@ interface MergedPlaylistProps {
     tracksUris: string[],
     token: string
   ) => Promise<void>;
-  token: string | null;
 }
 
 const MergedPlaylist: React.FC<MergedPlaylistProps> = ({
@@ -31,7 +30,6 @@ const MergedPlaylist: React.FC<MergedPlaylistProps> = ({
   playlistName,
   currentUser,
   createPlaylist,
-  token,
 }) => {
   const { handleSelectSong, currentSong } = useContext(PlayingContext);
   const [mergedPlaylist, setMergedPlaylist] = useLocalStorage<{
@@ -146,7 +144,7 @@ const MergedPlaylist: React.FC<MergedPlaylistProps> = ({
         )}
       </div>
       <div className="flex space-x-4">
-        <SpotifyPlayer token={token} />
+        <SpotifyPlayer />
         <YtPlayer />
       </div>
     </div>

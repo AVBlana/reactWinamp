@@ -15,32 +15,22 @@ const SpotifyAuth = () => {
     "playlist-modify-private",
   ].join(" ");
 
-  const { setSpotifyToken } = useContext(AppContext);
+  const { spotifyToken, refreshSpotifyToken, handleSpotifyLogout } =
+    useContext(AppContext);
 
   useEffect(() => {
-    const queryParams = new URLSearchParams(window.location.search);
-    const code = queryParams.get("code");
+    const queryParams = new URLSearchParams(window.location.href.split("#")[1]);
+    const accessToken = queryParams.get("access_token");
 
-    if (code) {
-      // Exchange code for tokens
-      fetch("/api/spotify/token", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ code }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          const { accessToken, refreshToken } = data;
-          setSpotifyToken(accessToken); // Update context with token
-          localStorage.setItem("access_token", accessToken); // Save access token
-          localStorage.setItem("refresh_token", refreshToken); // Save refresh token
-          window.location.href = "/"; // Redirect to home or desired route
-        })
-        .catch((error) => console.error("Error exchanging code:", error));
+    if (accessToken) {
+      localStorage.setItem("token", accessToken); // Save refresh token
+      refreshSpotifyToken();
     }
-  }, [setSpotifyToken]);
+  }, [refreshSpotifyToken]);
+
+  if (spotifyToken) {
+    return <button onClick={handleSpotifyLogout}>Logout Spotify</button>;
+  }
 
   return (
     <button className="spotBtn flex p-4 bg-green-600 text-white font-semibold rounded-md">

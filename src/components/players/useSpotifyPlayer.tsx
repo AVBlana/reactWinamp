@@ -1,13 +1,10 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useContext } from "react";
 import { PlayerActualState } from "../../types/playerTypes";
-
-interface TrackData {
-  title: string;
-  artist: string;
-  albumCover: string | null;
-}
+import { AppContext } from "../../context/App";
 
 const useSpotifyPlayer = () => {
+  const { spotifyToken, refreshSpotifyToken } = useContext(AppContext);
+
   const [player, setPlayer] = useState<Spotify.Player | null>(null);
   const [deviceId, setDeviceId] = useState<string>("");
   const [isEnabled, setIsEnabled] = useState<boolean>(false);
@@ -16,49 +13,22 @@ const useSpotifyPlayer = () => {
     isPlaying: false,
     isDone: false,
   });
-  const [token, setToken] = useState<string>(
-    localStorage.getItem("token") || ""
-  );
 
   const isInitialized = useRef(false);
   const playerRef = useRef<Spotify.Player | null>(null);
-
-  const refreshToken = useCallback(async (): Promise<string> => {
-    try {
-      const response = await fetch("http://localhost:3000/refresh", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          refreshToken: localStorage.getItem("token"),
-        }),
-      });
-
-      if (!response.ok) throw new Error("Failed to refresh token");
-
-      const data = await response.json();
-      localStorage.setItem("token", data.accessToken);
-      setToken(data.accessToken);
-      return data.accessToken; // Ensure it returns a value
-    } catch (error) {
-      console.error("Error refreshing token:", error);
-      throw error;
-    }
-  }, []); // Add dependencies if necessary
 
   const getPlaybackState = useCallback(async () => {
     try {
       const response = await fetch("https://api.spotify.com/v1/me/player", {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${spotifyToken}`,
           "Content-Type": "application/json",
         },
       });
 
       if (response.status === 401) {
         // Token might be expired, try refreshing
-        await refreshToken();
+        await refreshSpotifyToken();
       }
 
       if (response.status === 204) {
@@ -72,7 +42,7 @@ const useSpotifyPlayer = () => {
       console.error("Error fetching playback state:", error);
       throw error;
     }
-  }, [token, refreshToken]);
+  }, [spotifyToken, refreshSpotifyToken]);
 
   const getState = useCallback(
     async (isPlaying?: boolean, position?: number) => {
@@ -99,7 +69,7 @@ const useSpotifyPlayer = () => {
   );
 
   useEffect(() => {
-    if (!token || isInitialized.current) return;
+    if (!spotifyToken || isInitialized.current) return;
 
     isInitialized.current = true;
 
@@ -107,7 +77,7 @@ const useSpotifyPlayer = () => {
       if (window.Spotify) {
         const newPlayer = new window.Spotify.Player({
           name: "Web Playback SDK",
-          getOAuthToken: (cb: (token: string) => void) => cb(token),
+          getOAuthToken: (cb: (token: string) => void) => cb(spotifyToken),
         });
 
         newPlayer.addListener(
@@ -148,6 +118,7 @@ const useSpotifyPlayer = () => {
           "ready",
           ({ device_id }: { device_id: string }) => {
             console.log("Ready with Device ID", device_id);
+
             setDeviceId(device_id);
             setIsEnabled(true);
           }
@@ -187,7 +158,7 @@ const useSpotifyPlayer = () => {
       document.body.removeChild(script);
       isInitialized.current = false;
     };
-  }, [token]);
+  }, [spotifyToken]);
 
   const start = useCallback(
     async (trackUri: string) => {
@@ -199,7 +170,7 @@ const useSpotifyPlayer = () => {
             {
               method: "PUT",
               headers: {
-                Authorization: `Bearer ${token}`,
+                Authorization: `Bearer ${spotifyToken}`,
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
@@ -212,7 +183,7 @@ const useSpotifyPlayer = () => {
         }
       }
     },
-    [isEnabled, deviceId, token]
+    [isEnabled, deviceId, spotifyToken]
   );
 
   const play = useCallback(() => {
@@ -259,7 +230,7 @@ const useSpotifyPlayer = () => {
           {
             method: "PUT",
             headers: {
-              Authorization: `Bearer ${token}`,
+              Authorization: `Bearer ${spotifyToken}`,
               "Content-Type": "application/json",
             },
           }
@@ -268,7 +239,7 @@ const useSpotifyPlayer = () => {
     } catch (error) {
       console.error("Error stopping playback:", error);
     }
-  }, [isEnabled, deviceId, token]);
+  }, [isEnabled, deviceId, spotifyToken]);
 
   return {
     start,
@@ -277,7 +248,6 @@ const useSpotifyPlayer = () => {
     seek,
     stop,
     playerState,
-    refreshToken,
   };
 };
 

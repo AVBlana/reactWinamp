@@ -7,7 +7,7 @@ import { ServiceType, Song } from "./types/playerTypes";
 import { Search } from "./components/Search";
 
 const App: React.FC = () => {
-  const { spotifyToken, setSpotifyToken } = useContext(AppContext);
+  const { spotifyToken } = useContext(AppContext);
   const {
     spotifyPlaylist,
     setSpotifyPlaylist,
@@ -30,31 +30,6 @@ const App: React.FC = () => {
     [setSpotifyPlaylist, setYtPlaylist]
   );
 
-  useEffect(() => {
-    const initializeSpotifyToken = () => {
-      const hash = window.location.hash;
-      const storedToken = localStorage.getItem("token");
-      let accessToken = storedToken;
-
-      if (!accessToken && hash) {
-        const tokenParam = hash
-          .substring(1)
-          .split("&")
-          .find((elem) => elem.startsWith("access_token"));
-        accessToken = tokenParam?.split("=")[1] || null;
-
-        if (accessToken) {
-          localStorage.setItem("token", accessToken);
-        }
-        window.location.hash = ""; // Clear hash to prevent reloading with token
-      }
-
-      setSpotifyToken(accessToken);
-    };
-
-    initializeSpotifyToken();
-  }, [setSpotifyToken]);
-
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold text-center mb-4">ReAMP</h1>
@@ -71,7 +46,6 @@ const App: React.FC = () => {
           setPlaylistName={setPlaylistName}
           playlistName={playlistName}
           createPlaylist={createPlaylist}
-          token={spotifyToken || ""}
           currentUser={fetchCurrentUser}
         />
       </div>

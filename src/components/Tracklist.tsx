@@ -3,11 +3,9 @@ import { TrackItem } from "./TrackItem";
 
 const Tracklist = ({
   data,
-  addToPlaylist,
   saveTrack,
 }: {
   data: Song[];
-  addToPlaylist: (track: Song) => void;
   saveTrack: (trackId: string) => void;
 }) => {
   return (
@@ -18,7 +16,6 @@ const Tracklist = ({
           <TrackItem
             key={track.id}
             data={data[index]}
-            addToPlaylist={addToPlaylist}
             origin="tracklist"
             saveTrack={saveTrack}
           />

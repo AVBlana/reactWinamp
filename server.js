@@ -57,7 +57,7 @@ app.post("/api/spotify/refresh", async (req, res) => {
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
           Authorization: `Basic ${Buffer.from(
-            `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`
+            `${process.env.REACT_APP_SPOTIFY_CLIENT_ID}:${process.env.REACT_APP_SPOTIFY_API_KEY}`
           ).toString("base64")}`,
         },
       }
@@ -67,6 +67,7 @@ app.post("/api/spotify/refresh", async (req, res) => {
       accessToken: response.data.access_token,
     });
   } catch (error) {
+    console.warn(error);
     res.status(500).json({ error: "Failed to refresh token" });
   }
 });
